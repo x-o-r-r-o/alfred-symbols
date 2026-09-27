@@ -26,7 +26,10 @@ const ICON_STYLE = conf("icon_style", "light") === "dark" ? "dark" : "light";
 const ALT_FORMAT = lookup({ html: 1, hex: 1, js: 1, uplus: 1, python: 1, css: 1 }, conf("alt_format", "html")) ? conf("alt_format", "html") : "html";
 const TEX_PRIMARY = conf("tex_primary", "command") === "character" ? "character" : "command";
 const RENDER_PER_RUN = 10; // new glyph icons drawn per run; the rest follow on an automatic rerun
-const MAX_INPUT = 20000; // characters inspected or transformed at most
+const MAX_INPUT = 20000; // characters inspected at most
+const MAX_FANCY = 2000; // characters styled at most
+const MAX_FIX = 500000; // characters the typography fixer takes
+const LARGE = 50000; // longer results go through a cache file (see act.sh)
 
 // ---------- text helpers ----------
 
@@ -226,7 +229,7 @@ function stableUids(items) {
 
 function output(items, extra = {}) {
   stableUids(items);
-  if (pendingIcons) extra = Object.assign({ rerun: 0.2 }, extra);
+  if (pendingIcons && !renderFailed) extra = Object.assign({ rerun: 0.2 }, extra);
   return JSON.stringify(Object.assign({ skipknowledge: true, items }, extra), (k, v) =>
     typeof v !== "string" ? v : k === "title" || k === "subtitle" ? wellFormed(displayText(v)) : wellFormed(v)
   );
@@ -235,9 +238,21 @@ function output(items, extra = {}) {
 const NO_MOD = { valid: false, arg: "", subtitle: "Not available for this row" };
 
 // A plain copy/paste row (fancy text, formats, typography)
+// Values over 50 KB are written to the cache and passed as "symfile:<path>", which act.sh reads back,
+// so the Script Filter JSON stays small
+function largeValue(v) {
+  const dir = trimSlash(env("alfred_workflow_cache", ""));
+  if (v.length <= LARGE || !safeDir(dir)) return null;
+  const path = `${cacheDir()}/results/${hash(v)}.txt`;
+  return writeText(path, v) ? `symfile:${path}` : null;
+}
+
 function textRow(title, value, subtitle, icon, extra = {}) {
-  const v = String(value);
+  let v = String(value);
   const ok = v !== "" && !v.includes("\u0000");
+  const copy = v.length > LARGE ? "Too long for ⌘C: press ↩ to copy it" : v;
+  const largetype = v.length > 3000 ? v.slice(0, 3000) + "…" : v;
+  v = largeValue(v) || v;
   return Object.assign(
     {
       title: oneLine(title),
@@ -245,7 +260,7 @@ function textRow(title, value, subtitle, icon, extra = {}) {
       arg: v,
       valid: ok,
       icon: typeof icon === "string" ? { path: `icons/${icon}.png` } : icon,
-      text: { copy: v, largetype: v.length > 3000 ? v.slice(0, 3000) + "…" : v },
+      text: { copy, largetype },
       // the favourite, format and show-all keys only apply to character rows
       mods: { cmd: { arg: v, valid: ok, subtitle: "Paste into the frontmost app" }, alt: NO_MOD, ctrl: NO_MOD, "cmd+alt": NO_MOD },
     },
@@ -258,6 +273,7 @@ function textRow(title, value, subtitle, icon, extra = {}) {
 const ICON_VERSION = 1; // bump when the drawing changes, so cached icons are redrawn
 let rendered = 0;
 let pendingIcons = false;
+let renderFailed = false; // e.g. an unwritable cache: don't rerun forever
 
 function color(rgb, a = 1) {
   return $.NSColor.colorWithSRGBRedGreenBlueAlpha(rgb[0], rgb[1], rgb[2], a);
@@ -328,6 +344,7 @@ function glyphIcon(key, str, label) {
   } catch (e) {
     // fall through to the generic icon
   }
+  renderFailed = true;
   return { path: "icons/char.png" };
 }
 
@@ -342,24 +359,24 @@ h1{font-size:20px;text-align:center;margin:0 0 20px;font-weight:600}table{border
 td{padding:5px 10px;border-top:1px solid rgba(127,127,127,.25);vertical-align:top}td:first-child{opacity:.6;white-space:nowrap}
 code{font:14px ui-monospace,Menlo,monospace;word-break:break-all}</style></head><body>
 <div class="g">${htmlEscape(glyph)}</div><h1>${htmlEscape(title)}</h1><table>${rowsHtml}</table></body></html>`;
-  writeText(path, html);
-  return path;
+  return writeText(path, html) ? path : undefined; // no Quick Look rather than a missing file
 }
 const tr = (k, v) => `<tr><td>${htmlEscape(k)}</td><td><code>${htmlEscape(v)}</code></td></tr>`;
 
-// Old icons and previews are removed now and then (after 60 days unused)
+// Now and then, icons and previews older than 60 days and large results older than a day are removed
 function pruneCache() {
   if (TEST ? env("SYM_TEST_PRUNE", "") !== "1" : Math.random() > 0.01) return;
-  const limit = Date.now() - 60 * 86400 * 1000;
+  const now = Date.now();
   const subs = FM.contentsOfDirectoryAtPathError(cacheDir(), $());
   if (subs.isNil()) return;
   for (let j = 0; j < subs.count; j++) {
     const sub = subs.objectAtIndex(j).js;
-    if (!/^(glyphs-|preview$)/.test(sub)) continue;
+    if (!/^(glyphs-|preview$|results$)/.test(sub)) continue;
     if (/^glyphs-/.test(sub) && !sub.startsWith(`glyphs-${ICON_VERSION}-`)) {
       FM.removeItemAtPathError(`${cacheDir()}/${sub}`, $()); // icons of an older version
       continue;
     }
+    const limit = now - (sub === "results" ? 1 : 60) * 86400 * 1000;
     const dir = `${cacheDir()}/${sub}`;
     const names = FM.contentsOfDirectoryAtPathError(dir, $());
     if (names.isNil()) continue;
@@ -556,8 +573,8 @@ function charRow(rec, opts = {}) {
     mods: {
       cmd: { arg: bad ? "" : str, valid: !bad, subtitle: "Paste into the frontmost app", variables: { sym_rec: key } },
       alt: { arg: f[ALT_FORMAT], valid: true, subtitle: `Copy as ${lookup(ALT_LABEL, ALT_FORMAT)}: ${f[ALT_FORMAT]}`, variables: { sym_rec: key } },
-      ctrl: { arg: key, valid: true, subtitle: fav ? "Remove from favourites" : "Add to favourites" },
-      "cmd+alt": { arg: str, valid: true, subtitle: "Show every format (HTML entity, \\u{…}, U+XXXX, UTF-8…)" },
+      ctrl: { arg: key, valid: !bad, subtitle: fav ? "Remove from favourites" : "Add to favourites" },
+      "cmd+alt": { arg: bad ? "" : str, valid: !bad, subtitle: "Show every format (HTML entity, \\u{…}, U+XXXX, UTF-8…)" },
     },
   };
   if (!bad && str.length === 1 && /[\s]/.test(str)) item.text.largetype = name;
@@ -575,18 +592,18 @@ function keyToCps(key) {
 function recFromCps(cps) {
   if (cps.length === 1) return charInfo(cps[0]);
   const rec = charByHex(cps.map((c) => c.toString(16)).join(" "));
-  return rec || { cps, name: "CHARACTER SEQUENCE", aliases: [], gc: "Emoji", entity: "", unnamed: true };
+  return rec || { cps, name: `Sequence of ${cps.length} code points`, aliases: [], gc: "Emoji", entity: "", unnamed: true };
 }
 
 // ---------- Unicode search ----------
 
-const CP_RE = /^(?:u\+|U\+|\\u\{|\\u|\\U|u|0x|&#x|%u)([0-9a-fA-F]{1,8})(?:\}|;)?$/;
+const CP_RE = /^(?:u\+|U\+|\\u\{|\\u|\\U|0x|&#x|%u)([0-9a-fA-F]{1,8})(?:\}|;)?$|^[uU]([0-9a-fA-F]{4,6})$/;
 
 // U+2192, u2192, \u{1F600}, \U0001F600, 0x2192, &#x2192;, &#8594; → code point
 function parseCodePoint(t) {
   let m = CP_RE.exec(t);
   let cp = null;
-  if (m) cp = parseInt(m[1], 16);
+  if (m) cp = parseInt(m[1] || m[2], 16); // a bare "u" needs 4 digits: "ue" is a word, not U+000E
   else if ((m = /^&#(\d{1,7});?$/.exec(t))) cp = parseInt(m[1], 10);
   return cp !== null && cp <= 0x10ffff ? cp : null;
 }
@@ -681,7 +698,7 @@ function uniItems(query) {
   const favs = favSet();
   if (q === "") return uniEmpty(favs);
   // pasted characters: identify each one ("what is this character?")
-  if (/[^\x00-\x7f]/.test(q) || (q.length === 1 && /[^A-Za-z0-9]/.test(q))) return inspectItems(query, { fromSearch: true });
+  if (/[^\x00-\x7f]/.test(q) || !/[A-Za-z0-9]/.test(q)) return inspectItems(q);
   const items = [];
   const seen = new Set();
   const push = (rec) => {
@@ -732,9 +749,9 @@ function graphemeCount(s) {
   return (s.match(/\P{M}\p{M}*/gu) || []).length;
 }
 
-function inspectItems(query, opts = {}) {
+function inspectItems(query) {
   let text = query, source = "text";
-  if (text === "" || (!opts.fromSearch && text.trim() === "" && text.length === 0)) {
+  if (text === "") {
     text = clipboard();
     source = "clipboard";
     if (text === "") return [info("Clipboard is empty", "Type or paste characters after the keyword to identify them", "inspect")];
@@ -967,7 +984,8 @@ function fancyItems(query) {
     source = "clipboard";
     if (text.trim() === "") return [info("Type the text to style", "Or copy it first, or use the Universal Action on selected text", "fancy")];
   }
-  if (text.length > MAX_INPUT) text = text.slice(0, MAX_INPUT);
+  // 27 styled copies go into the JSON: styled text is for short snippets
+  if (text.length > MAX_FANCY) return [info(`Fancy text works on up to ${MAX_FANCY.toLocaleString("en-US")} characters`, "Select or type less text", "error")];
   const items = FANCY.map((st) => {
     const v = fancy(st, text);
     return textRow(v, v, `${st.name}${source ? " · from the clipboard" : ""} · ↩ Copy · ⌘↩ Paste`, "fancy", { uid: `fancy-${st.id}` });
@@ -1033,6 +1051,8 @@ function texItems(query) {
   const cmdQ = q.replace(/^\\/, "");
   const low = cmdQ.toLowerCase();
   const toks = tokens(q);
+  const pre = toks.map((t) => new RegExp(`\\b${t}`));
+  const whole = toks.map((t) => new RegExp(`\\b${t}\\b`));
   all.forEach((f, order) => {
     const bare = f[0].slice(1);
     const bl = bare.toLowerCase();
@@ -1043,9 +1063,8 @@ function texItems(query) {
     else if (low.length >= 3 && bl.includes(low)) score = 25 - Math.min(10, bl.length - low.length);
     if (toks.length) {
       let nameScore = 0;
-      for (const t of toks) {
-        const re = new RegExp(`\\b${t}`);
-        if (re.test(f[3])) nameScore += new RegExp(`\\b${t}\\b`).test(f[3]) ? 3 : 2;
+      for (let i = 0; i < toks.length; i++) {
+        if (pre[i].test(f[3])) nameScore += whole[i].test(f[3]) ? 3 : 2;
         else {
           nameScore = -1;
           break;
@@ -1138,8 +1157,9 @@ function smartTypography(text, opts = {}) {
     let s = p.t;
     if (!onlyQuotes) {
       s = s.replace(/(\S) ---? (\S)/g, (m, a, b) => (count("dashes"), emStyle ? `${a}—${b}` : `${a} – ${b}`));
-      s = s.replace(/(^|[^-])---(?!-)/g, (m, a) => (count("dashes"), a + "—"));
-      s = s.replace(/(^|[^-])--(?!-)/g, (m, a) => (count("dashes"), a + (emStyle ? "—" : "–")));
+      // unspaced only between words: "--save" (a command-line option) and a Markdown "---" rule stay
+      s = s.replace(/([^\s-])---(?=[^\s-])/g, (m, a) => (count("dashes"), a + "—"));
+      s = s.replace(/([^\s-])--(?=[^\s-])/g, (m, a) => (count("dashes"), a + (emStyle ? "—" : "–")));
       s = s.replace(/([A-Za-z\u00c0-\u024f,;)]) - (?=[A-Za-z\u00c0-\u024f(])/g, (m, a) => (count("dashes"), emStyle ? `${a}—` : `${a} – `));
       s = s.replace(/\.\.\.|\. \. \./g, () => (count("ellipses"), "…"));
       s = s.replace(/\((c|C)\)/g, () => (count("symbols"), "©")).replace(/\((r|R)\)/g, () => (count("symbols"), "®")).replace(/\((tm|TM|Tm)\)/g, () => (count("symbols"), "™"));
@@ -1151,10 +1171,10 @@ function smartTypography(text, opts = {}) {
       s = s.replace(/(\d+)'(\d+(?:\.\d+)?)"/g, (m, a, b) => (count("symbols"), `${a}′${b}″`));
       s = s.replace(/(\S) {2,}(?=\S)/g, (m, a) => (count("spaces"), a + " "));
     }
-    // apostrophes inside and at the start of words: don't, it's, '90s, rock 'n' roll
+    // apostrophes (always ’, whatever the quote style): rock 'n' roll, don't, it's, '90s, 'em
+    s = s.replace(/(^|\s)'n'(?=\s)/g, (m, a) => (count("apostrophes", 2), a + "’n’"));
     s = s.replace(/([A-Za-z\u00c0-\u024f\d])'(?=[A-Za-z\u00c0-\u024f])/g, (m, a) => (count("apostrophes"), a + "’"));
-    s = s.replace(/(^|[\s(\[—–-])'(?=\d\ds\b|\d\d\b|n'\s|em\b|tis\b|twas\b)/g, (m, a) => (count("apostrophes"), a + "’"));
-    s = s.replace(/(^|[\s])'n'(?=\s)/g, (m, a) => (count("apostrophes", 2), a + "’n’"));
+    s = s.replace(/(^|[\s(\[—–-])'(?=\d\ds\b|\d\d\b|em\b|tis\b|twas\b)/g, (m, a) => (count("apostrophes"), a + "’"));
     // the remaining straight quotes open after a space, bracket or dash, and close otherwise
     let res = "";
     for (let i = 0; i < s.length; i++) {
@@ -1206,7 +1226,7 @@ function typofixItems(query) {
     source = " · from the clipboard";
     if (text.trim() === "") return [info("Type or copy the text to fix", "Or use the Universal Action on selected text", "typo")];
   }
-  if (text.length > MAX_INPUT * 10) return [info("The text is too long", "Fix at most 200,000 characters at a time", "error")];
+  if (text.length > MAX_FIX) return [info("The text is too long", `Fix at most ${MAX_FIX.toLocaleString("en-US")} characters at a time`, "error")];
   const full = smartTypography(text);
   const quotesOnly = smartTypography(text, { onlyQuotes: true });
   const changes = describeCounts(full.counts);

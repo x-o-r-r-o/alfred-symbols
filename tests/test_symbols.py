@@ -727,6 +727,69 @@ class BuildTests(unittest.TestCase):
         self.assertNotIn("replaceAll", js)
 
 
+class AuditOneRegressionTests(unittest.TestCase):
+    """Bugs found in the first audit."""
+
+    def test_no_endless_rerun_when_icons_cannot_be_written(self):
+        ro = os.path.join(BASE, "read only")
+        os.makedirs(ro, exist_ok=True)
+        os.chmod(ro, 0o555)
+        try:
+            data = sf("uni", "latin capital letter", full=True, alfred_workflow_cache=os.path.join(ro, "cache"))
+            self.assertNotIn("rerun", data)
+        finally:
+            os.chmod(ro, 0o755)
+
+    def test_rows_that_cannot_be_copied_have_no_actions(self):
+        it = sf("uni", "U+0378")[0]
+        self.assertFalse(it["mods"]["ctrl"]["valid"])
+        self.assertFalse(it["mods"]["cmd+alt"]["valid"])
+        self.assertFalse(it["mods"]["cmd"]["valid"])
+
+    def test_bare_u_prefix_needs_four_digits(self):
+        self.assertNotEqual(sf("uni", "ue")[0]["arg"], "\x0e")
+        self.assertNotEqual(sf("uni", "uad")[0].get("arg"), "\xad")
+        self.assertEqual(sf("uni", "u2192")[0]["arg"], "→")
+        self.assertEqual(sf("uni", "U1F600")[0]["arg"], "😀")
+
+    def test_unknown_sequence_and_punctuation(self):
+        it = sf("uni", "U+41 U+42")[0]
+        self.assertEqual(it["arg"], "AB")
+        self.assertIn("Sequence of 2 code points", it["title"])
+        it = sf("uni", "->")
+        self.assertIn("2 code points", it[0]["title"])
+
+    def test_fancy_input_is_capped(self):
+        it = sf("fancy", "x" * 2001)
+        self.assertEqual(len(it), 1)
+        self.assertFalse(it[0]["valid"])
+        self.assertEqual(len(sf("fancy", "x" * 2000)), 27)
+
+    def test_large_results_go_through_the_cache(self):
+        text = ('"quoted" -- text... ' * 4000)
+        data = raw("typofix", text)
+        self.assertLess(len(data), 60000)
+        it = json.loads(data)["items"][0]
+        self.assertTrue(it["arg"].startswith("symfile:" + CACHE + "/results/"))
+        self.assertEqual(it["mods"]["cmd"]["arg"], it["arg"])
+        self.assertIn("Too long", it["text"]["copy"])
+        fixed = act(it["arg"])
+        self.assertTrue(fixed.startswith("“quoted”—text… “quoted”"))
+        self.assertNotIn('"', fixed)
+        # anything else that looks like a result file passes through untouched
+        for fake in ["symfile:/etc/passwd", "symfile:" + CACHE + "/results/../../x.txt", "symfile:" + CACHE + "/results/zz.txt"]:
+            self.assertEqual(act(fake), fake)
+
+    def test_typography_edge_cases(self):
+        fix = lambda t, **e: sf("typofix", t, **e)[0]["arg"]
+        self.assertEqual(fix("rock 'n' roll", quote_style="de"), "rock ’n’ roll")
+        self.assertEqual(fix("don't", quote_style="de"), "don’t")
+        self.assertEqual(fix("run npm i --save now"), "run npm i --save now")
+        self.assertEqual(fix("wait--what"), "wait—what")
+        self.assertEqual(fix("wait--what", dash_style="en"), "wait–what")
+        self.assertEqual(fix("title\n---\nbody"), "title\n---\nbody")
+
+
 class PerformanceTests(unittest.TestCase):
     def test_keystroke_speed(self):
         queries = ["a", "ar", "arr", "arro", "arrow", "right arrow", "l", "latin small letter e", "U+1F600", "heart", "🙂", "zzzz"]
