@@ -1,0 +1,78 @@
+“	201c	Left double quotation mark	Opens a quotation in English: “Hello”	quote curly smart open	ldquo
+”	201d	Right double quotation mark	Closes a quotation in English; opens and closes in Swedish	quote curly smart close	rdquo
+‘	2018	Left single quotation mark	Opens a quote within a quote, or a British quotation	quote curly smart open single	lsquo
+’	2019	Right single quotation mark (apostrophe)	The apostrophe: it’s, don’t, ’90s	apostrophe quote curly smart close single	rsquo
+„	201e	Double low-9 quotation mark	Opens a quotation in German, Polish, Czech: „Hallo“	quote german low	bdquo
+‚	201a	Single low-9 quotation mark	Opens a quote within a quote in German	quote german low single	sbquo
+«	ab	Left-pointing double angle quotation mark	Guillemet: opens a quotation in French (« Bonjour »)	guillemet quote french angle	laquo
+»	bb	Right-pointing double angle quotation mark	Guillemet: closes a quotation in French; opens one in German books	guillemet quote french angle	raquo
+‹	2039	Single left-pointing angle quotation mark	Opens a quote within a quote in French and Swiss German	guillemet quote single angle	lsaquo
+›	203a	Single right-pointing angle quotation mark	Closes a quote within a quote in French and Swiss German	guillemet quote single angle	rsaquo
+「	300c	Left corner bracket	Opens a quotation in Japanese and Chinese	quote japanese chinese	
+」	300d	Right corner bracket	Closes a quotation in Japanese and Chinese	quote japanese chinese	
+′	2032	Prime	Feet, minutes and arcminutes: 6′, 45′	feet minutes prime	prime
+″	2033	Double prime	Inches, seconds and arcseconds: 6′ 2″	inches seconds prime	Prime
+–	2013	En dash	Ranges and connections: 9–17, pages 4–8, London–Paris	dash range ndash	ndash
+—	2014	Em dash	A break in a sentence—like this (no spaces in US style)	dash break mdash	mdash
+‒	2012	Figure dash	Between digits of the same width: 555‒1234	dash figure phone	
+―	2015	Horizontal bar	Introduces a quotation or dialogue in some styles	dash quotation bar	horbar
+‐	2010	Hyphen	An unambiguous hyphen (the keyboard - is a hyphen-minus)	hyphen	dash
+‑	2011	Non-breaking hyphen	A hyphen that never starts a new line: e‑mail	hyphen nonbreaking nbhy	
+­	ad	Soft hyphen	An invisible hint where a long word may break	hyphen soft shy invisible	shy
+−	2212	Minus sign	Mathematics and negative numbers: −5 °C	minus math	minus
+…	2026	Horizontal ellipsis	Omission or trailing thought… (one character, not three dots)	ellipsis dots hellip	mldr
+ 	a0	No-break space	Keeps two words on one line: 10 km, Mr Smith	space nbsp nonbreaking	nbsp
+ 	202f	Narrow no-break space	Before French punctuation and between thousands: 10 000	space narrow nonbreaking thin french	
+ 	2009	Thin space	A fifth of an em: around dashes or in numbers	space thin	thinsp
+ 	200a	Hair space	The thinnest space, for fine kerning	space hair	hairsp
+ 	2002	En space	Half an em wide	space en	ensp
+ 	2003	Em space	As wide as the font size	space em	emsp
+ 	2007	Figure space	As wide as a digit: aligns numbers in columns	space figure digit	numsp
+​	200b	Zero width space	An invisible line-break opportunity (in URLs or long words)	space zero width zwsp invisible	ZeroWidthSpace
+⁠	2060	Word joiner	Invisibly prevents a line break	joiner invisible wj	NoBreak
+‍	200d	Zero width joiner	Joins emoji into sequences and shapes some scripts	joiner zwj invisible emoji	zwj
+‌	200c	Zero width non-joiner	Prevents a ligature or joining	nonjoiner zwnj invisible	zwnj
+•	2022	Bullet	List items and separators • like this	bullet list dot	bull
+·	b7	Middle dot	Separators in lists and Catalan l·l	dot middle interpunct separator	middot
+‣	2023	Triangular bullet	An alternative list bullet	bullet triangle	
+⁃	2043	Hyphen bullet	A dash-like list bullet	bullet hyphen	hybull
+©	a9	Copyright sign	© 2026 Name	copyright	copy
+®	ae	Registered sign	A registered trademark®	registered trademark	reg
+™	2122	Trade mark sign	An unregistered trademark™	trademark tm	trade
+℗	2117	Sound recording copyright	℗ on audio recordings	phonogram copyright	copysr
+§	a7	Section sign	Legal sections: § 4	section legal	sect
+¶	b6	Pilcrow sign	Paragraphs	paragraph pilcrow	para
+†	2020	Dagger	A second footnote, or a date of death	dagger footnote obelisk	dagger
+‡	2021	Double dagger	A third footnote	dagger double footnote	ddagger
+‰	2030	Per mille sign	Parts per thousand: 5‰	permille per thousand	permil
+°	b0	Degree sign	Temperatures and angles: 21°C, 90°	degree temperature	deg
+×	d7	Multiplication sign	Dimensions and multiplication: 1920×1080, 3 × 4	times multiplication dimensions	times
+÷	f7	Division sign	Division	division divide	div
+±	b1	Plus-minus sign	Tolerances: ±0.5 mm	plus minus tolerance	pm
+≠	2260	Not equal to	Inequality	not equal	ne
+≈	2248	Almost equal to	Approximations: ≈ 3 km	approximately almost equal	ap
+≤	2264	Less-than or equal to	Comparisons	less equal	le
+≥	2265	Greater-than or equal to	Comparisons	greater equal	ge
+½	bd	Vulgar fraction one half	½ cup	fraction half	half
+¼	bc	Vulgar fraction one quarter	¼ hour	fraction quarter	frac14
+¾	be	Vulgar fraction three quarters	¾ full	fraction three quarters	frac34
+⁄	2044	Fraction slash	Builds any fraction: 5⁄8	fraction slash	frasl
+№	2116	Numero sign	Numbers in some languages: № 5	number numero	numero
+ª	aa	Feminine ordinal indicator	Spanish and Portuguese ordinals: 1ª	ordinal feminine	ordf
+º	ba	Masculine ordinal indicator	Spanish and Portuguese ordinals: 1º	ordinal masculine	ordm
+¿	bf	Inverted question mark	Opens a Spanish question: ¿Qué?	question inverted spanish	iquest
+¡	a1	Inverted exclamation mark	Opens a Spanish exclamation: ¡Hola!	exclamation inverted spanish	iexcl
+‽	203d	Interrobang	A question and exclamation in one‽	interrobang question exclamation	
+→	2192	Rightwards arrow	Directions and flows: Settings → General	arrow right	rarr
+←	2190	Leftwards arrow	Back, or the opposite direction	arrow left	larr
+⌘	2318	Place of interest sign	The Command key: ⌘C	command key mac	
+⌥	2325	Option key	The Option key: ⌥⌘I	option alt key mac	
+⇧	21e7	Upwards white arrow	The Shift key: ⇧⌘Z	shift key mac	
+⌃	2303	Up arrowhead	The Control key: ⌃C	control ctrl key mac	
+↩	21a9	Leftwards arrow with hook	The Return key: ↩	return enter key mac	larrhk
+⌫	232b	Erase to the left	The Delete key	delete backspace key mac	
+⎋	238b	Broken circle with northwest arrow	The Escape key	escape esc key mac	
+€	20ac	Euro sign	12 € or €12, depending on the language	currency euro	euro
+£	a3	Pound sign	£12	currency pound sterling	pound
+¥	a5	Yen sign	¥1,200	currency yen yuan	yen
+¢	a2	Cent sign	99¢	currency cent	cent

@@ -1,0 +1,530 @@
+{
+  "bundleid": "io.github.x-o-r-r-o.symbols",
+  "name": "Symbols",
+  "description": "Search Unicode characters, identify symbols, kaomoji, fancy text, LaTeX commands and smart typography",
+  "category": "Productivity",
+  "createdby": "x-o-r-r-o",
+  "webaddress": "https://github.com/x-o-r-r-o/alfred-symbols",
+  "version": "1.0.0",
+  "variablesdontexport": [],
+  "config": [
+    {
+      "type": "textfield",
+      "variable": "keyword_uni",
+      "label": "Keywords",
+      "description": "Search Unicode characters, emoji and code points",
+      "config": {
+        "default": "uni",
+        "placeholder": "uni",
+        "required": true,
+        "trim": true
+      }
+    },
+    {
+      "type": "textfield",
+      "variable": "keyword_chars",
+      "label": "",
+      "description": "Identify characters (typed, pasted or in the clipboard)",
+      "config": {
+        "default": "chars",
+        "placeholder": "chars",
+        "required": true,
+        "trim": true
+      }
+    },
+    {
+      "type": "textfield",
+      "variable": "keyword_kao",
+      "label": "",
+      "description": "Kaomoji and emoticons",
+      "config": {
+        "default": "kao",
+        "placeholder": "kao",
+        "required": true,
+        "trim": true
+      }
+    },
+    {
+      "type": "textfield",
+      "variable": "keyword_fancy",
+      "label": "",
+      "description": "Fancy text",
+      "config": {
+        "default": "fancy",
+        "placeholder": "fancy",
+        "required": true,
+        "trim": true
+      }
+    },
+    {
+      "type": "textfield",
+      "variable": "keyword_tex",
+      "label": "",
+      "description": "LaTeX commands",
+      "config": {
+        "default": "tex",
+        "placeholder": "tex",
+        "required": true,
+        "trim": true
+      }
+    },
+    {
+      "type": "textfield",
+      "variable": "keyword_typo",
+      "label": "",
+      "description": "Typographic characters",
+      "config": {
+        "default": "typo",
+        "placeholder": "typo",
+        "required": true,
+        "trim": true
+      }
+    },
+    {
+      "type": "textfield",
+      "variable": "keyword_typofix",
+      "label": "",
+      "description": "Fix typography (smart quotes and dashes)",
+      "config": {
+        "default": "typofix",
+        "placeholder": "typofix",
+        "required": true,
+        "trim": true
+      }
+    },
+    {
+      "type": "popupbutton",
+      "variable": "alt_format",
+      "label": "⌥↩ copies",
+      "description": "The format ⌥↩ copies a character in; ⌘⌥↩ shows every format",
+      "config": {
+        "default": "html",
+        "pairs": [
+          [
+            "HTML entity (&rarr;)",
+            "html"
+          ],
+          [
+            "Hex HTML entity (&#x2192;)",
+            "hex"
+          ],
+          [
+            "\\u{…} escape (\\u{2192})",
+            "js"
+          ],
+          [
+            "Code point (U+2192)",
+            "uplus"
+          ],
+          [
+            "Python escape (\\N{…})",
+            "python"
+          ],
+          [
+            "CSS escape (\\2192)",
+            "css"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "popupbutton",
+      "variable": "icon_style",
+      "label": "Character icons",
+      "description": "",
+      "config": {
+        "default": "light",
+        "pairs": [
+          [
+            "Dark on light",
+            "light"
+          ],
+          [
+            "Light on dark",
+            "dark"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "popupbutton",
+      "variable": "max_results",
+      "label": "Results",
+      "description": "Most rows shown by a search",
+      "config": {
+        "default": "50",
+        "pairs": [
+          [
+            "30",
+            "30"
+          ],
+          [
+            "50",
+            "50"
+          ],
+          [
+            "100",
+            "100"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "checkbox",
+      "variable": "show_recent",
+      "label": "",
+      "description": "",
+      "config": {
+        "default": true,
+        "required": false,
+        "text": "Show recently used characters, kaomoji and commands"
+      }
+    },
+    {
+      "type": "popupbutton",
+      "variable": "tex_primary",
+      "label": "LaTeX ↩ copies",
+      "description": "⌥↩ copies the other one",
+      "config": {
+        "default": "command",
+        "pairs": [
+          [
+            "The command (\\alpha)",
+            "command"
+          ],
+          [
+            "The character (α)",
+            "character"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "popupbutton",
+      "variable": "quote_style",
+      "label": "Quotation marks",
+      "description": "Used by the typography fixer",
+      "config": {
+        "default": "en",
+        "pairs": [
+          [
+            "English “…” ‘…’",
+            "en"
+          ],
+          [
+            "British ‘…’ “…”",
+            "en-gb"
+          ],
+          [
+            "German „…“ ‚…‘",
+            "de"
+          ],
+          [
+            "German »…« ›…‹",
+            "de-guillemets"
+          ],
+          [
+            "French « … » ‹ … ›",
+            "fr"
+          ],
+          [
+            "Swiss «…» ‹…›",
+            "ch"
+          ],
+          [
+            "Swedish ”…” ’…’",
+            "sv"
+          ],
+          [
+            "Polish „…” ‚…’",
+            "pl"
+          ]
+        ]
+      }
+    },
+    {
+      "type": "popupbutton",
+      "variable": "dash_style",
+      "label": "Dashes",
+      "description": "How the fixer turns -- and spaced hyphens into dashes",
+      "config": {
+        "default": "em",
+        "pairs": [
+          [
+            "Em dash, no spaces (word—word)",
+            "em"
+          ],
+          [
+            "En dash with spaces (word – word)",
+            "en"
+          ]
+        ]
+      }
+    }
+  ],
+  "objects": [
+    {
+      "id": "sf_uni",
+      "type": "scriptfilter",
+      "keyword": "{var:keyword_uni}",
+      "title": "Unicode Symbols",
+      "subtext": "Search by name, code point or character",
+      "script": "osascript -l JavaScript ./symbols.js uni \"$1\""
+    },
+    {
+      "id": "sf_chars",
+      "type": "scriptfilter",
+      "keyword": "{var:keyword_chars}",
+      "title": "What Is This Character?",
+      "subtext": "Identify each character in the clipboard or typed text",
+      "script": "osascript -l JavaScript ./symbols.js chars \"$1\"",
+      "trimmode": 1
+    },
+    {
+      "id": "sf_kao",
+      "type": "scriptfilter",
+      "keyword": "{var:keyword_kao}",
+      "title": "Kaomoji",
+      "subtext": "Search kaomoji and emoticons",
+      "script": "osascript -l JavaScript ./symbols.js kao \"$1\""
+    },
+    {
+      "id": "sf_fancy",
+      "type": "scriptfilter",
+      "keyword": "{var:keyword_fancy}",
+      "title": "Fancy Text",
+      "subtext": "𝐁𝐨𝐥𝐝, 𝑖𝑡𝑎𝑙𝑖𝑐, 𝓈𝒸𝓇𝒾𝓅𝓉, 𝔣𝔯𝔞𝔨𝔱𝔲𝔯 and more",
+      "script": "osascript -l JavaScript ./symbols.js fancy \"$1\"",
+      "trimmode": 1
+    },
+    {
+      "id": "sf_tex",
+      "type": "scriptfilter",
+      "keyword": "{var:keyword_tex}",
+      "title": "LaTeX Symbols",
+      "subtext": "Search LaTeX commands by name or symbol",
+      "script": "osascript -l JavaScript ./symbols.js tex \"$1\""
+    },
+    {
+      "id": "sf_typo",
+      "type": "scriptfilter",
+      "keyword": "{var:keyword_typo}",
+      "title": "Typographic Characters",
+      "subtext": "Quotes, dashes, spaces and marks, with when to use them",
+      "script": "osascript -l JavaScript ./symbols.js typo \"$1\""
+    },
+    {
+      "id": "sf_typofix",
+      "type": "scriptfilter",
+      "keyword": "{var:keyword_typofix}",
+      "title": "Fix Typography",
+      "subtext": "Smart quotes, dashes and ellipses for the clipboard or typed text",
+      "script": "osascript -l JavaScript ./symbols.js typofix \"$1\"",
+      "trimmode": 1
+    },
+    {
+      "id": "ua_chars",
+      "type": "universalaction",
+      "name": "Identify Characters",
+      "text": true
+    },
+    {
+      "id": "ua_fancy",
+      "type": "universalaction",
+      "name": "Fancy Text",
+      "text": true
+    },
+    {
+      "id": "ua_typofix",
+      "type": "universalaction",
+      "name": "Fix Typography",
+      "text": true
+    },
+    {
+      "id": "act",
+      "type": "script",
+      "script": "./act.sh \"$1\"",
+      "note": "Records recently used items and passes the text on exactly"
+    },
+    {
+      "id": "act_paste",
+      "type": "script",
+      "script": "./act.sh \"$1\""
+    },
+    {
+      "id": "copy",
+      "type": "clipboard",
+      "autopaste": false
+    },
+    {
+      "id": "paste",
+      "type": "clipboard",
+      "autopaste": true
+    },
+    {
+      "id": "fav",
+      "type": "script",
+      "script": "osascript -l JavaScript ./symbols.js fav \"$1\"",
+      "note": "Adds or removes a favourite"
+    },
+    {
+      "id": "notify",
+      "type": "notification"
+    },
+    {
+      "id": "show",
+      "type": "script",
+      "script": "osascript -l JavaScript ./symbols.js show \"$1\"",
+      "note": "Opens the character in the chars keyword to show every format"
+    }
+  ],
+  "connections": [
+    {
+      "from": "ua_chars",
+      "to": "sf_chars"
+    },
+    {
+      "from": "ua_fancy",
+      "to": "sf_fancy"
+    },
+    {
+      "from": "ua_typofix",
+      "to": "sf_typofix"
+    },
+    {
+      "from": "sf_uni",
+      "to": "act"
+    },
+    {
+      "from": "sf_uni",
+      "to": "act_paste",
+      "mod": "cmd"
+    },
+    {
+      "from": "sf_uni",
+      "to": "act",
+      "mod": "alt"
+    },
+    {
+      "from": "sf_uni",
+      "to": "fav",
+      "mod": "ctrl"
+    },
+    {
+      "from": "sf_uni",
+      "to": "show",
+      "mod": "cmd+alt"
+    },
+    {
+      "from": "sf_chars",
+      "to": "act"
+    },
+    {
+      "from": "sf_chars",
+      "to": "act_paste",
+      "mod": "cmd"
+    },
+    {
+      "from": "sf_chars",
+      "to": "act",
+      "mod": "alt"
+    },
+    {
+      "from": "sf_chars",
+      "to": "fav",
+      "mod": "ctrl"
+    },
+    {
+      "from": "sf_chars",
+      "to": "show",
+      "mod": "cmd+alt"
+    },
+    {
+      "from": "sf_kao",
+      "to": "act"
+    },
+    {
+      "from": "sf_kao",
+      "to": "act_paste",
+      "mod": "cmd"
+    },
+    {
+      "from": "sf_kao",
+      "to": "fav",
+      "mod": "ctrl"
+    },
+    {
+      "from": "sf_fancy",
+      "to": "act"
+    },
+    {
+      "from": "sf_fancy",
+      "to": "act_paste",
+      "mod": "cmd"
+    },
+    {
+      "from": "sf_tex",
+      "to": "act"
+    },
+    {
+      "from": "sf_tex",
+      "to": "act_paste",
+      "mod": "cmd"
+    },
+    {
+      "from": "sf_tex",
+      "to": "act",
+      "mod": "alt"
+    },
+    {
+      "from": "sf_tex",
+      "to": "fav",
+      "mod": "ctrl"
+    },
+    {
+      "from": "sf_typo",
+      "to": "act"
+    },
+    {
+      "from": "sf_typo",
+      "to": "act_paste",
+      "mod": "cmd"
+    },
+    {
+      "from": "sf_typo",
+      "to": "act",
+      "mod": "alt"
+    },
+    {
+      "from": "sf_typo",
+      "to": "fav",
+      "mod": "ctrl"
+    },
+    {
+      "from": "sf_typo",
+      "to": "show",
+      "mod": "cmd+alt"
+    },
+    {
+      "from": "sf_typofix",
+      "to": "act"
+    },
+    {
+      "from": "sf_typofix",
+      "to": "act_paste",
+      "mod": "cmd"
+    },
+    {
+      "from": "act",
+      "to": "copy"
+    },
+    {
+      "from": "act_paste",
+      "to": "paste"
+    },
+    {
+      "from": "fav",
+      "to": "notify"
+    }
+  ]
+}

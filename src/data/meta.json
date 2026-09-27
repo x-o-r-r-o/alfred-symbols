@@ -1,0 +1,39 @@
+{
+ "unicode": "18.0.0",
+ "characters": 172873,
+ "named_rows": 46588,
+ "rule_named": 126285,
+ "emoji_sequences": 523,
+ "kaomoji": 1855,
+ "latex": 3007,
+ "sources": {
+  "UnicodeData.txt": {
+   "url": "https://www.unicode.org/Public/18.0.0/ucd/UnicodeData.txt",
+   "sha256": "0736451de439ae7baf1425136617da495e09ee5afbe6e394374db7009ea08950"
+  },
+  "NameAliases.txt": {
+   "url": "https://www.unicode.org/Public/18.0.0/ucd/NameAliases.txt",
+   "sha256": "3d5cf5e468901b080cd99adf2230061b748083705fe633db43ac8b73ec7a13da"
+  },
+  "Blocks.txt": {
+   "url": "https://www.unicode.org/Public/18.0.0/ucd/Blocks.txt",
+   "sha256": "a58f8d322f3c5e254f9f97b1cbf76a454a7e02de6ac35619a5e4f27aaabfd553"
+  },
+  "NamesList.txt": {
+   "url": "https://www.unicode.org/Public/18.0.0/ucd/NamesList.txt",
+   "sha256": "e0732f7cb47a08ee2186c83a18a91ae277126e8099b53c432b4c3e32488dac9b"
+  },
+  "emoji-test.txt": {
+   "url": "https://www.unicode.org/Public/18.0.0/emoji/emoji-test.txt",
+   "sha256": "8f3735cda1f92a779d78af67cf86066bb1f07143dc22f2ac29394d9bc57ab21a"
+  },
+  "unicode.xml": {
+   "url": "https://www.w3.org/2003/entities/2007xml/unicode.xml",
+   "sha256": "bcd6782c078f4f3521300c7d1f7a26ebd766011a62adf45c1111634c2291ac10"
+  },
+  "asciilib.json": {
+   "url": "https://raw.githubusercontent.com/iansinnott/asciilib/52b034b55a684251b4f0c4974d707b9de4d198f4/lib.json",
+   "sha256": "775fccc5aa14f6dfffbd68b6380c3354c4a3be216f8f4dc2307ccc9190e1436c"
+  }
+ }
+}

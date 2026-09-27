@@ -1,0 +1,17 @@
+{
+  "icon": ["character.book.closed.fill", "#7C3AED"],
+  "uni": ["character.magnify", "#7C3AED"],
+  "inspect": ["text.magnifyingglass", "#0891B2"],
+  "kao": ["face.smiling", "#DB2777"],
+  "fancy": ["textformat", "#D97706"],
+  "tex": ["function", "#2563EB"],
+  "typo": ["quote.opening", "#059669"],
+  "fav": ["star.fill", "#EAB308"],
+  "recent": ["clock.arrow.circlepath", "#64748B"],
+  "category": ["folder.fill", "#DB2777"],
+  "format": ["curlybraces", "#475569"],
+  "char": ["character", "#94A3B8"],
+  "info": ["info.circle.fill", "#64748B"],
+  "ok": ["checkmark.circle.fill", "#16A34A"],
+  "error": ["exclamationmark.triangle.fill", "#DC2626"]
+}
