@@ -478,8 +478,8 @@ class InspectTests(unittest.TestCase):
         it = sf("chars", "é👍🏽")  # precomposed é, thumbs up with a skin tone
         self.assertIn("3 code points · 2 characters · 5 UTF-16 units · 10 UTF-8 bytes", it[0]["title"])
         it = sf("chars", "x" * 300)
-        self.assertIn("first 200", it[-1]["title"])
-        self.assertEqual(len(it), 3 + 200 + 1)
+        self.assertIn("first 100", it[-1]["title"])
+        self.assertEqual(len(it), 3 + 100 + 1)
 
 
 class KaomojiTests(unittest.TestCase):
@@ -788,6 +788,29 @@ class AuditOneRegressionTests(unittest.TestCase):
         self.assertEqual(fix("wait--what"), "wait—what")
         self.assertEqual(fix("wait--what", dash_style="en"), "wait–what")
         self.assertEqual(fix("title\n---\nbody"), "title\n---\nbody")
+
+
+class AuditTwoRegressionTests(unittest.TestCase):
+    """Bugs found in the second audit."""
+
+    def test_large_text_fix_is_linear(self):
+        # the quote pass read the last character of a growing string: 3 s for 500,000 characters
+        text = '"quoted" -- text... ' * 25000
+        t = time.time()
+        raw("typofix", text)
+        self.assertLess(time.time() - t, 1.5)
+        self.assertFalse(sf("typofix", "x" * 500001)[0]["valid"])
+
+    def test_pruning_runs_at_most_daily(self):
+        fresh = os.path.join(BASE, "prune cache")
+        old = os.path.join(fresh, "results", "0123.txt")
+        os.makedirs(os.path.dirname(old))
+        with open(old, "w") as f:
+            f.write("x")
+        os.utime(old, (time.time() - 3 * 86400,) * 2)
+        sf("uni", "star", alfred_workflow_cache=fresh, SYM_TEST_PRUNE="1")
+        self.assertFalse(os.path.exists(old))
+        self.assertTrue(os.path.exists(os.path.join(fresh, ".pruned")))
 
 
 class PerformanceTests(unittest.TestCase):

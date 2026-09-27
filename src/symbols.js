@@ -363,10 +363,15 @@ code{font:14px ui-monospace,Menlo,monospace;word-break:break-all}</style></head>
 }
 const tr = (k, v) => `<tr><td>${htmlEscape(k)}</td><td><code>${htmlEscape(v)}</code></td></tr>`;
 
-// Now and then, icons and previews older than 60 days and large results older than a day are removed
+// Once a day, icons and previews older than 60 days and large results older than a day are removed
 function pruneCache() {
-  if (TEST ? env("SYM_TEST_PRUNE", "") !== "1" : Math.random() > 0.01) return;
+  // at most once a day (a stamp file), so no keystroke pays for listing thousands of icons twice
+  if (TEST && env("SYM_TEST_PRUNE", "") !== "1") return;
   const now = Date.now();
+  const stamp = `${cacheDir()}/.pruned`;
+  const st = FM.attributesOfItemAtPathError(stamp, $());
+  if (!st.isNil() && st.fileModificationDate.timeIntervalSince1970 * 1000 > now - 86400 * 1000 && env("SYM_TEST_PRUNE", "") !== "1") return;
+  writeText(stamp, String(now));
   const subs = FM.contentsOfDirectoryAtPathError(cacheDir(), $());
   if (subs.isNil()) return;
   for (let j = 0; j < subs.count; j++) {
@@ -780,7 +785,7 @@ function inspectItems(query) {
     hidden ? `⚠︎ ${plural(hidden, "invisible or unusual character")} · ↩ Copy as U+XXXX list` : "↩ Copy as U+XXXX list", "inspect"));
   items.push(textRow(`Copy as ${oneLine(f.js, 60)}`, f.js, "\\u{…} escapes (JavaScript, Swift, Rust, PHP)", "format"));
   items.push(textRow(`Copy as ${oneLine(f.html, 60)}`, f.html, "HTML entities", "format"));
-  const limit = 200;
+  const limit = 100; // rows (and Quick Look pages) per run: the JSON stays around 80 KB
   for (const cp of cps.slice(0, limit)) {
     const rec = isSurrogate(cp) ? { cps: [cp], name: `<LONE SURROGATE-${hex4(cp)}>`, aliases: [], gc: "Cs", entity: "", unnamed: true } : charInfo(cp);
     const row = charRow(rec, { favs });
@@ -1176,20 +1181,21 @@ function smartTypography(text, opts = {}) {
     s = s.replace(/([A-Za-z\u00c0-\u024f\d])'(?=[A-Za-z\u00c0-\u024f])/g, (m, a) => (count("apostrophes"), a + "’"));
     s = s.replace(/(^|[\s(\[—–-])'(?=\d\ds\b|\d\d\b|em\b|tis\b|twas\b)/g, (m, a) => (count("apostrophes"), a + "’"));
     // the remaining straight quotes open after a space, bracket or dash, and close otherwise
-    let res = "";
-    for (let i = 0; i < s.length; i++) {
-      const c = s[i];
-      if (c !== '"' && c !== "'") {
-        res += c;
-        continue;
+    // (the last character is tracked separately: reading it back from a growing string is quadratic)
+    let before = prevChar;
+    const res = s.replace(/["']|[^"']+/g, (m) => {
+      if (m !== '"' && m !== "'") {
+        before = m[m.length - 1];
+        return m;
       }
-      const before = res.length ? res[res.length - 1] : prevChar; // already converted: “'hi'” sees the “
+      // already converted: in “'hi'” the ' sees the “
       const opening = before === "" || /[\s(\[{<>—–\/-]/.test(before) || q[0].endsWith(before) || q[2].endsWith(before);
-      if (c === '"') res += opening ? q[0] : q[1];
-      else res += opening ? q[2] : q[3];
+      const out = m === '"' ? (opening ? q[0] : q[1]) : opening ? q[2] : q[3];
+      before = out[out.length - 1];
       count("quotes");
-    }
-    prevChar = res.slice(-1);
+      return out;
+    });
+    prevChar = before;
     return res;
   });
   return { text: out.join(""), counts };
