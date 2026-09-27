@@ -542,9 +542,12 @@ def main():
     write("entities.txt", build_entities())
     in_ranges = sum(e - s + 1 for s, e, _, _ in ranges)
     singles = sum(1 for r in rows if " " not in r[0])
+    controls = sum(1 for r in rows if " " not in r[0] and r[3] == "Cc")
     meta = {
         "unicode": UNICODE_VERSION,
         "characters": singles + in_ranges,
+        # Unicode's own count ("172,808 characters") covers graphic and format characters, not the 65 controls
+        "unicode_total": singles + in_ranges - controls,
         "named_rows": singles,
         "rule_named": in_ranges,
         "emoji_sequences": len(rows) - singles,

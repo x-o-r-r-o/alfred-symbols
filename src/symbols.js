@@ -27,9 +27,10 @@ const ALT_FORMAT = lookup({ html: 1, hex: 1, js: 1, uplus: 1, python: 1, css: 1 
 const TEX_PRIMARY = conf("tex_primary", "command") === "character" ? "character" : "command";
 const RENDER_PER_RUN = 10; // new glyph icons drawn per run; the rest follow on an automatic rerun
 const MAX_INPUT = 20000; // characters inspected at most
-const MAX_FANCY = 2000; // characters styled at most
+const MAX_FANCY = 1000; // characters styled at most (27 styled copies go into the JSON)
 const MAX_FIX = 500000; // characters the typography fixer takes
-const LARGE = 50000; // longer results go through a cache file (see act.sh)
+const LARGE = 16000; // longer results go through a cache file (see act.sh): a row repeats its value in arg,
+// the ⌘ arg and ⌘C, so the Script Filter JSON stays under ~50 KB per row
 
 // ---------- text helpers ----------
 
@@ -237,7 +238,7 @@ function output(items, extra = {}) {
 
 const NO_MOD = { valid: false, arg: "", subtitle: "Not available for this row" };
 
-// Values over 50 KB are written to the cache and passed as "symfile:<path>", which act.sh reads back,
+// Values over 16,000 characters are written to the cache and passed as "symfile:<path>", which act.sh reads back,
 // so the Script Filter JSON stays small
 let largeCount = 0;
 function largeValue(v) {
@@ -254,6 +255,10 @@ function textRow(title, value, subtitle, icon, extra = {}) {
   const copy = v.length > LARGE ? "Too long for ⌘C: press ↩ to copy it" : v;
   const largetype = v.length > 3000 ? v.slice(0, 3000) + "…" : v;
   v = largeValue(v) || v;
+  // ⌘C and ⌘L default to arg: only differing values are repeated, so the JSON stays small
+  const text = {};
+  if (copy !== v) text.copy = copy;
+  if (largetype !== v) text.largetype = largetype;
   return Object.assign(
     {
       title: oneLine(title),
@@ -261,7 +266,7 @@ function textRow(title, value, subtitle, icon, extra = {}) {
       arg: v,
       valid: ok,
       icon: typeof icon === "string" ? { path: `icons/${icon}.png` } : icon,
-      text: { copy, largetype },
+      text,
       // the favourite, format and show-all keys only apply to character rows
       mods: { cmd: { arg: v, valid: ok, subtitle: "Paste into the frontmost app" }, alt: NO_MOD, ctrl: NO_MOD, "cmd+alt": NO_MOD },
     },
@@ -271,7 +276,7 @@ function textRow(title, value, subtitle, icon, extra = {}) {
 
 // ---------- glyph icons and previews ----------
 
-const ICON_VERSION = 1; // bump when the drawing changes, so cached icons are redrawn
+const ICON_VERSION = 2; // bump when the drawing changes, so cached icons are redrawn
 let rendered = 0;
 let pendingIcons = false;
 let renderFailed = false; // e.g. an unwritable cache: don't rerun forever
@@ -286,22 +291,22 @@ function attributed(str, size, rgb) {
   return a;
 }
 
-// Draws text centred on a rounded tile with NSAttributedString (font fallback included) and writes a PNG.
+// Draws text centred on a rounded tile with NSAttributedString (font fallback included) and returns PNG data.
 // label: a short name drawn instead of an invisible character (NBSP, ZWJ…), inside a dashed frame.
-function drawGlyph(str, path, label) {
-  useAppKit();
+function paintTile(text, label) {
   const size = 96;
   const dark = ICON_STYLE === "dark";
   const fg = dark ? [0.95, 0.95, 0.96] : [0.11, 0.11, 0.13];
+  const opts = 8; // NSStringDrawingUsesDeviceMetrics
   const rep = $.NSBitmapImageRep.alloc.initWithBitmapDataPlanesPixelsWidePixelsHighBitsPerSampleSamplesPerPixelHasAlphaIsPlanarColorSpaceNameBytesPerRowBitsPerPixel(
     null, size, size, 8, 4, true, false, $.NSDeviceRGBColorSpace, 0, 0);
-  if (rep.isNil()) return false;
+  if (rep.isNil()) return null;
   $.NSGraphicsContext.saveGraphicsState;
   $.NSGraphicsContext.setCurrentContext($.NSGraphicsContext.graphicsContextWithBitmapImageRep(rep));
   const inset = size * 0.04;
   color(dark ? [0.16, 0.16, 0.18] : [0.96, 0.96, 0.97]).setFill;
   $.NSBezierPath.bezierPathWithRoundedRectXRadiusYRadius($.NSMakeRect(inset, inset, size - 2 * inset, size - 2 * inset), size * 0.18, size * 0.18).fill;
-  let text = str, fs = size * 0.6;
+  let fs = size * 0.6;
   if (label) {
     const frame = $.NSBezierPath.bezierPathWithRoundedRectXRadiusYRadius($.NSMakeRect(size * 0.14, size * 0.3, size * 0.72, size * 0.4), 6, 6);
     frame.lineWidth = 2;
@@ -312,7 +317,6 @@ function drawGlyph(str, path, label) {
     fs = size * 0.22;
   }
   // Device metrics: the ink box of the glyphs, relative to the baseline origin, so the ink is centred
-  const opts = 8; // NSStringDrawingUsesDeviceMetrics
   let a = attributed(text, fs, fg);
   let b = a.boundingRectWithSizeOptions($.NSMakeSize(1e5, 1e5), opts);
   const max = size * (label ? 0.62 : 0.74);
@@ -323,16 +327,41 @@ function drawGlyph(str, path, label) {
   }
   const x = size / 2 - (b.origin.x + b.size.width / 2);
   const y = size / 2 - (b.origin.y + b.size.height / 2);
-  if (b.size.width > 0) a.drawWithRectOptions($.NSMakeRect(x, y, 1e5, 1e5), opts);
+  if (text && b.size.width > 0) a.drawWithRectOptions($.NSMakeRect(x, y, 1e5, 1e5), opts);
   $.NSGraphicsContext.restoreGraphicsState;
   const png = rep.representationUsingTypeProperties($.NSBitmapImageFileTypePNG, $({}));
-  if (png.isNil()) return false;
+  return png.isNil() ? null : png;
+}
+
+let EMPTY_TILE = null; // the tile with nothing drawn on it, to spot glyphs no font draws
+function drawGlyph(str, path, label, fallback) {
+  useAppKit();
+  let png = paintTile(str, label);
+  if (png && !label) {
+    if (!EMPTY_TILE) EMPTY_TILE = paintTile("", "");
+    if (EMPTY_TILE && png.isEqualToData(EMPTY_TILE)) {
+      // nothing drawn (a mark that won't sit on a no-break space, a blank character): try the mark alone,
+      // then on a dotted circle, and draw the short label rather than an empty tile
+      const bare = str.replace(/^\u00a0/, "");
+      png = null;
+      for (const t of [bare, "\u25cc" + bare]) {
+        if (t === str) continue;
+        const p = paintTile(t, "");
+        if (p && !p.isEqualToData(EMPTY_TILE)) {
+          png = p;
+          break;
+        }
+      }
+      if (!png) png = paintTile("", fallback || hex4(bare.codePointAt(0) || 0));
+    }
+  }
+  if (!png) return false;
   mkdirp(path.replace(/\/[^/]*$/, ""));
   return png.writeToFileAtomically(path, true);
 }
 
 // Icon for a character row: rendered lazily into the cache and reused afterwards
-function glyphIcon(key, str, label) {
+function glyphIcon(key, str, label, fallback) {
   const path = `${cacheDir()}/glyphs-${ICON_VERSION}-${ICON_STYLE}/${key}.png`;
   if (exists(path)) return { path };
   if (rendered >= RENDER_PER_RUN) {
@@ -341,7 +370,7 @@ function glyphIcon(key, str, label) {
   }
   rendered++;
   try {
-    if (drawGlyph(str, path, label)) return { path };
+    if (drawGlyph(str, path, label, fallback)) return { path };
   } catch (e) {
     // fall through to the generic icon
   }
@@ -523,7 +552,15 @@ function uniKey(cps) {
   return "u:" + cps.map((c) => c.toString(16)).join("-");
 }
 
+// Characters that draw nothing although they aren't spaces or format characters: Hangul fillers (a
+// well-known "invisible name" trick), the blank Braille pattern, variation selectors and the grapheme joiner
+function isBlank(cp) {
+  return cp === 0x115f || cp === 0x1160 || cp === 0x3164 || cp === 0xffa0 || cp === 0x2800 || cp === 0x34f ||
+    cp === 0x17b4 || cp === 0x17b5 || (cp >= 0x180b && cp <= 0x180f) || (cp >= 0xfe00 && cp <= 0xfe0f) || (cp >= 0xe0100 && cp <= 0xe01ef);
+}
+
 function invisibleLabel(rec) {
+  if (rec.cps.length === 1 && isBlank(rec.cps[0])) return rec.abbr && rec.abbr.length <= 6 ? rec.abbr : hex4(rec.cps[0]);
   if (!/^(Z|C|Emoji)/.test(rec.gc) || rec.gc === "Emoji") return null;
   if (rec.abbr && rec.abbr.length <= 6) return rec.abbr;
   if (rec.entity && rec.entity.length <= 6) return rec.entity.toUpperCase();
@@ -551,9 +588,9 @@ function charRow(rec, opts = {}) {
   const bad = cps.some(isSurrogate) || cps.includes(0) || (rec.unnamed && /UNASSIGNED|SURROGATE/.test(rec.name));
   const label = invisibleLabel(rec);
   const fav = opts.favs && opts.favs.has(key);
-  const name = rec.unnamed ? rec.name : titleCase(rec.name);
+  const name = (rec.unnamed ? rec.name : titleCase(rec.name)) + (rec.suffix || "");
   const glyph = label ? "" : shownGlyph(rec);
-  const block = cps.length === 1 ? blockOf(cps[0]) : GC.Emoji;
+  const block = cps.length === 1 ? blockOf(cps[0]) : rec.suffix ? "Variation sequence" : GC.Emoji;
   const f = formats(cps, rec);
   const alias = rec.aliases.find((a) => a.length > 6 && titleCase(a) !== name);
   const parts = [f.uplus, block];
@@ -572,7 +609,7 @@ function charRow(rec, opts = {}) {
     subtitle: `${fav ? "★ " : opts.recent ? "↺ " : ""}${note || parts.join(" · ")}`,
     arg: bad ? "" : str,
     valid: !bad,
-    icon: bad ? { path: "icons/char.png" } : glyphIcon(hexKey, label ? "" : iconGlyph(rec), label),
+    icon: bad ? { path: "icons/char.png" } : glyphIcon(hexKey, label ? "" : iconGlyph(rec), label, cps.length === 1 ? hex4(cps[0]) : ""),
     variables: { sym_rec: key },
     text: { copy: bad ? f.uplus : str, largetype: glyph || name },
     quicklookurl: previewPage(`v${ICON_VERSION}-${hexKey}`, glyph || label || "", name, detail),
@@ -595,10 +632,21 @@ function keyToCps(key) {
   const cps = key.slice(2).split("-").map((h) => parseInt(h, 16));
   return cps.every((c) => Number.isInteger(c) && c >= 0 && c <= 0x10ffff) ? cps : null;
 }
+// A known emoji sequence, or a character with an emoji or text presentation selector (❤️ is U+2764 U+FE0F)
+function sequenceRec(cps) {
+  const rec = charByHex(cps.map((c) => c.toString(16)).join(" "));
+  if (rec) return rec;
+  if (cps.length === 2 && (cps[1] === 0xfe0f || cps[1] === 0xfe0e)) {
+    const base = charInfo(cps[0]);
+    if (!base.unnamed && !/^[LMCZ]/.test(base.gc) && !isBlank(cps[0])) {
+      return { cps, name: base.name, suffix: cps[1] === 0xfe0f ? " (emoji style)" : " (text style)", aliases: base.aliases, gc: "Emoji", entity: "", abbr: "", keys: [] };
+    }
+  }
+  return null;
+}
 function recFromCps(cps) {
   if (cps.length === 1) return charInfo(cps[0]);
-  const rec = charByHex(cps.map((c) => c.toString(16)).join(" "));
-  return rec || { cps, name: `Sequence of ${cps.length} code points`, aliases: [], gc: "Emoji", entity: "", unnamed: true };
+  return sequenceRec(cps) || { cps, name: `Sequence of ${cps.length} code points`, aliases: [], gc: "Emoji", entity: "", unnamed: true };
 }
 
 // ---------- Unicode search ----------
@@ -689,7 +737,7 @@ function uniEmpty(favs) {
     items.push(charRow(recFromCps(cps), { favs, recent: true }));
   }
   const meta = readJSON("./data/meta.json", {});
-  const total = (meta.characters || 0).toLocaleString("en-US");
+  const total = (meta.unicode_total || meta.characters || 0).toLocaleString("en-US");
   const hints = [
     info(`Search ${total} Unicode ${meta.unicode || ""} characters`, "Type a name like “arrow”, a code point like U+2192, or paste a character", "uni"),
     info("arrow", "Search by name or alias", "uni", { autocomplete: "arrow" }),
@@ -777,7 +825,7 @@ function inspectItems(query) {
   const favs = favSet();
   const cps = cpsOf(text); // a lone surrogate comes out as its own code point
   const items = [];
-  if (cps.length === 1 || (cps.length > 1 && charByHex(cps.map((c) => c.toString(16)).join(" ")))) {
+  if (cps.length === 1 || (cps.length > 1 && sequenceRec(cps))) {
     const rec = recFromCps(cps);
     items.push(charRow(rec, { favs }));
     return items.concat(formatRows(rec));
@@ -785,7 +833,7 @@ function inspectItems(query) {
   const utf16 = text.length, utf8 = utf8Bytes(cps.map((c) => (isSurrogate(c) ? 0xfffd : c))).length;
   const hidden = cps.filter((c) => {
     const r = c < 0x80 ? null : charInfo(c);
-    return (c < 0x20 && c !== 10 && c !== 9) || (r && /^(Cf|Zs|Zl|Zp|Cc|Co|Cn|Cs)$/.test(r.gc));
+    return (c < 0x20 && c !== 10 && c !== 9) || (r && (/^(Cf|Zs|Zl|Zp|Cc|Co|Cn|Cs)$/.test(r.gc) || (isBlank(c) && c !== 0xfe0e && c !== 0xfe0f)));
   }).length;
   const f = formats(cps.map((c) => (isSurrogate(c) ? 0xfffd : c)), null);
   const summary = [plural(cps.length, "code point"), plural(graphemeCount(text), "character"), `${utf16} UTF-16 units`, `${utf8} UTF-8 bytes`];

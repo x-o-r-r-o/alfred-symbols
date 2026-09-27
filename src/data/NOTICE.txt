@@ -2,6 +2,7 @@ Symbols bundles data generated from the following sources (see tools/build_data.
 
 1. Unicode Character Database 18.0.0 and Unicode emoji data (chars.txt, ranges.txt, blocks.txt)
    https://www.unicode.org/Public/18.0.0/
+   The emoji names are the CLDR short names carried by emoji-test.txt (Unicode CLDR, same licence).
 
 UNICODE LICENSE V3
 
@@ -47,7 +48,43 @@ authorization of the copyright holder.
    https://www.w3.org/2003/entities/2007xml/unicode.xml
    Copyright David Carlisle 1999-2015. Use and distribution of this code are permitted under the terms of the
    W3C Software Notice and License: http://www.w3.org/Consortium/Legal/2002/copyright-software-20021231.html
-   The LaTeX commands were filtered, classified by package and a few corrected; see tools/build_data.py.
+   Changes (September 2026): only the LaTeX commands were kept; they were filtered, classified by package,
+   a few were corrected and a few added; see tools/build_data.py.
+
+W3C SOFTWARE NOTICE AND LICENSE
+
+This work (and included software, documentation such as READMEs, or other related items) is being provided
+by the copyright holders under the following license.
+
+License
+
+By obtaining, using and/or copying this work, you (the licensee) agree that you have read, understood, and
+will comply with the following terms and conditions.
+
+Permission to copy, modify, and distribute this software and its documentation, with or without
+modification, for any purpose and without fee or royalty is hereby granted, provided that you include the
+following on ALL copies of the software and documentation or portions thereof, including modifications:
+
+- The full text of this NOTICE in a location viewable to users of the redistributed or derivative work.
+- Any pre-existing intellectual property disclaimers, notices, or terms and conditions. If none exist, the
+  W3C Software Short Notice should be included (hypertext is preferred, text is permitted) within the body
+  of any redistributed or derivative code.
+- Notice of any changes or modifications to the files, including the date changes were made. (We recommend
+  you provide URIs to the location from which the code is derived.)
+
+Disclaimers
+
+THIS SOFTWARE AND DOCUMENTATION IS PROVIDED "AS IS," AND COPYRIGHT HOLDERS MAKE NO REPRESENTATIONS OR
+WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO, WARRANTIES OF MERCHANTABILITY OR FITNESS FOR
+ANY PARTICULAR PURPOSE OR THAT THE USE OF THE SOFTWARE OR DOCUMENTATION WILL NOT INFRINGE ANY THIRD PARTY
+PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER RIGHTS.
+
+COPYRIGHT HOLDERS WILL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT
+OF ANY USE OF THE SOFTWARE OR DOCUMENTATION.
+
+The name and trademarks of copyright holders may NOT be used in advertising or publicity pertaining to the
+software without specific, written prior permission. Title to copyright in this software and any associated
+documentation will at all times remain with copyright holders.
 
 3. asciilib by Ian Sinnott (kaomoji.txt)
    https://github.com/iansinnott/asciilib (commit 52b034b55a684251b4f0c4974d707b9de4d198f4)
@@ -77,5 +114,8 @@ SOFTWARE.
 
 4. HTML named character references (entities.txt), from the WHATWG HTML Standard via Python's html.entities.
    https://html.spec.whatwg.org/multipage/named-characters.html
+   Copyright © WHATWG (Apple, Google, Mozilla, Microsoft). Licensed under a Creative Commons Attribution 4.0
+   International License: https://creativecommons.org/licenses/by/4.0/
+   Only the entity names and the code points they stand for are used.
 
 The typography catalogue (typography.txt) and the emoticons in kaomoji.txt were written for this workflow.

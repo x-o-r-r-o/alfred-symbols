@@ -147,6 +147,24 @@ class DataTests(unittest.TestCase):
         self.assertEqual(meta["emoji_sequences"], len(rows) - singles)
         self.assertGreater(meta["characters"], 150000)
         self.assertEqual(meta["characters"], meta["named_rows"] + meta["rule_named"])
+        controls = sum(1 for f in rows if " " not in f[0] and f[3] == "Cc")
+        self.assertEqual(controls, 65)
+        self.assertEqual(meta["unicode_total"], meta["characters"] - controls)
+        self.assertEqual(meta["unicode_total"], 172808)  # "a total of 172,808 characters" (Unicode 18.0 announcement)
+
+    def test_data_matches_the_claimed_unicode_version(self):
+        with open(os.path.join(DATA, "meta.json")) as f:
+            meta = json.load(f)
+        for name, src in meta["sources"].items():
+            if "unicode.org" in src["url"]:
+                self.assertIn("/18.0.0/", src["url"], name)
+
+    def test_notice_carries_every_licence(self):
+        with open(os.path.join(DATA, "NOTICE.txt"), encoding="utf-8") as f:
+            notice = f.read()
+        for needle in ["UNICODE LICENSE V3", "CLDR", "W3C SOFTWARE NOTICE AND LICENSE", "The full text of this NOTICE",
+                       "Copyright David Carlisle", "Copyright (c) 2022 Ian Sinnott", "WHATWG", "Creative Commons Attribution 4.0"]:
+            self.assertIn(needle, notice)
 
     def test_blocks_sorted_and_disjoint(self):
         prev = -1
@@ -317,7 +335,7 @@ class SearchTests(unittest.TestCase):
 
     def test_empty_query_hints(self):
         it = sf("uni", "")
-        self.assertIn("172,873", it[0]["title"])
+        self.assertIn("172,808", it[0]["title"])  # Unicode's own count: graphic and format characters
         self.assertTrue(all(i["valid"] is False for i in it))
         self.assertEqual(it[1]["autocomplete"], "arrow")
 
@@ -402,9 +420,9 @@ class SearchTests(unittest.TestCase):
 
     def test_icon_style_and_versioned_cache(self):
         it = self.first("U+2605", icon_style="dark")
-        self.assertIn("/glyphs-1-dark/", it["icon"]["path"])
+        self.assertIn("/glyphs-2-dark/", it["icon"]["path"])
         it = self.first("U+2605", icon_style=" junk ")
-        self.assertIn("/glyphs-1-light/", it["icon"]["path"])
+        self.assertIn("/glyphs-2-light/", it["icon"]["path"])
         with open(it["icon"]["path"], "rb") as f:
             self.assertEqual(f.read(8), b"\x89PNG\r\n\x1a\n")
         old = os.path.join(CACHE, "glyphs-light")
@@ -760,10 +778,10 @@ class AuditOneRegressionTests(unittest.TestCase):
         self.assertIn("2 code points", it[0]["title"])
 
     def test_fancy_input_is_capped(self):
-        it = sf("fancy", "x" * 2001)
+        it = sf("fancy", "x" * 1001)
         self.assertEqual(len(it), 1)
         self.assertFalse(it[0]["valid"])
-        self.assertEqual(len(sf("fancy", "x" * 2000)), 27)
+        self.assertEqual(len(sf("fancy", "x" * 1000)), 27)
 
     def test_large_results_go_through_the_cache(self):
         text = ('"quoted" -- text... ' * 4000)
@@ -836,6 +854,67 @@ class AuditThreeRegressionTests(unittest.TestCase):
         files = [i["arg"] for i in items if i["arg"].startswith("symfile:")]
         self.assertEqual(len(files), len(set(files)))
         self.assertGreaterEqual(len(files), 2)
+
+
+class IndependentAuditRegressionTests(unittest.TestCase):
+    def setUp(self):
+        reset_data()
+
+    def test_variation_sequences_are_identified(self):
+        it = sf("chars", "\u2764\ufe0f")
+        self.assertEqual(it[0]["arg"], "\u2764\ufe0f")
+        self.assertIn("Heavy Black Heart (emoji style)", it[0]["title"])
+        self.assertIn("red heart", it[0]["subtitle"])
+        self.assertEqual(it[0]["uid"], "u:2764-fe0f")
+        self.assertIn("U+2764 U+FE0F", args(it))
+        self.assertIn("(text style)", sf("uni", "\u263a\ufe0e")[0]["title"])
+        # letters have no emoji presentation: still two code points
+        self.assertIn("2 code points", sf("chars", "a\ufe0f")[0]["title"])
+        # a favourite variation sequence comes back
+        raw("fav", "u:2764-fe0f")
+        self.assertEqual(sf("uni", "")[0]["arg"], "\u2764\ufe0f")
+
+    def test_blank_characters_get_a_label(self):
+        for cp, label in [(0xFE0F, "[VS16]"), (0x3164, "[3164]"), (0x2800, "[2800]"), (0xE0100, "[VS17]"), (0x115F, "[115F]")]:
+            it = sf("uni", "U+%04X" % cp)[0]
+            self.assertTrue(it["title"].startswith(label), it["title"])
+        # a Hangul filler (a well-known invisible name) is flagged by the inspector; an emoji selector isn't
+        self.assertIn("1 invisible", sf("chars", "a\u3164b")[0]["subtitle"])
+        self.assertNotIn("invisible", sf("chars", "\u2764\ufe0f!")[0]["subtitle"])
+
+    def test_marks_fonts_cant_draw_are_not_blank_tiles(self):
+        # an empty tile is ~1.3 KB; the fallback draws the mark alone, on a dotted circle, or its code point
+        fresh = os.path.join(BASE, "blank cache")
+        for q in ["U+0489", "U+1DFF", "U+17B4"]:
+            p = sf("uni", q, alfred_workflow_cache=fresh)[0]["icon"]["path"]
+            self.assertTrue(p.startswith(fresh), p)
+            self.assertGreater(os.path.getsize(p), 1500, q)
+
+    def test_pathological_glyphs_render_quickly(self):
+        fresh = os.path.join(BASE, "pathological cache")
+        cases = ["\ufdfd", "\U00012219", "\u200b", "\u202e", "\u0628", "\ufe0f", "\U000E0100",
+                 "\U0001F468\u200D\U0001F469\u200D\U0001F467\u200D\U0001F466",
+                 "\U0001F3F4\U000E0067\U000E0062\U000E0065\U000E006E\U000E0067\U000E007F", "\U0001F1FA\U0001F1F8",
+                 "\u0489", "\ue000", "\U000EFFFF", "Z\u0351\u0352\u0357\u0358\u035b\u0350\u0346\u0344" * 3]
+        for q in cases:
+            t = time.time()
+            data = sf("chars", q, full=True, alfred_workflow_cache=fresh)
+            self.assertLess((time.time() - t) * 1000, 1500, repr(q))
+            for i in data["items"]:
+                p = i["icon"]["path"]
+                if p.startswith(fresh):
+                    with open(p, "rb") as f:
+                        self.assertEqual(f.read(8), b"\x89PNG\r\n\x1a\n")
+
+    def test_script_filter_json_stays_small(self):
+        for cmd, q in [("chars", "a" * 5000), ("uni", "\U0001F4A9" * 3000), ("fancy", "Hello World " * 83),
+                       ("chars", "arrow " * 200)]:
+            # (100 character rows with long test paths: about 1.5 KB each)
+            self.assertLess(len(raw(cmd, q)), 170000, cmd)
+        # ⌘C and ⌘L default to arg: only differing values are sent
+        it = sf("fancy", "hi")[0]
+        self.assertNotIn("copy", it.get("text", {}))
+        self.assertEqual(it["mods"]["cmd"]["arg"], it["arg"])
 
 
 class PerformanceTests(unittest.TestCase):

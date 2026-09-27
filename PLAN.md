@@ -17,7 +17,7 @@ Raycast demand this workflow replaces (downloads, as given in the brief, 2026-09
 **Alfred today:** the Gallery has “UTF Search” and “What Unicode Character Is This?”; kaomoji, fancy text, LaTeX and typography need separate, older community workflows.
 
 **What the Raycast extensions lack (from their READMEs, changelogs and issues):**
-- Unicode Symbols Search ships a 5,400-character “minimal” set by default; the full set (40,000) is slow and not available in list view. Open issues: custom keywords, a missing Cyrillic letter, reverse lookup of non-printable characters, search by code. → All 172,873 characters and 523 emoji sequences, sub-200 ms, any code-point notation, a “what is this” inspector that flags invisible characters.
+- Unicode Symbols Search ships a 5,400-character “minimal” set by default; the full set (40,000) is slow and not available in list view. Open issues: custom keywords, a missing Cyrillic letter, reverse lookup of non-printable characters, search by code. → All 172,808 characters of Unicode 18.0 (plus the 65 controls) and 523 emoji sequences, sub-200 ms, any code-point notation, a “what is this” inspector that flags invisible characters.
 - Kaomoji Search (asciilib): no categories. → The same MIT data with 24 categories and western emoticons.
 - Fancy Text: no way back to plain text. → A “plain text” row (NFKC) for styled input; 27 styles.
 - LaTeX Math Symbols: amsmath only, no package info. → 3,000 commands from LaTeX, amssymb, mathrsfs and unicode-math, labelled by package, reverse lookup from a pasted symbol.
@@ -26,10 +26,10 @@ Raycast demand this workflow replaces (downloads, as given in the brief, 2026-09
 ## Features (v1.0)
 - [x] `uni` search: names, formal and informal aliases (NameAliases + NamesList “=” lines), CLDR emoji names, formal abbreviations and a curated list of everyday names (“right arrow”, “checkmark”, “cmd”)
 - [x] Code points in any notation: `U+2192`, `u2192`, `2192`, `\u{…}`, `\U…`, `0x…`, `&#x…;`, `&#…;`, `&name;`; several `U+` tokens make a sequence
-- [x] Rows: glyph icon drawn lazily with NSAttributedString into the cache (10 per run, the rest on a 0.2 s rerun), code point, block, first informal alias; invisible characters drawn as a dashed label (NBSP, ZWJ…), combining marks on ◌
+- [x] Rows: glyph icon drawn lazily with NSAttributedString into the cache (10 per run, the rest on a 0.2 s rerun), code point, block, first informal alias; invisible and blank characters drawn as a dashed label (NBSP, ZWJ, VS16, Hangul fillers, Braille blank…), combining marks on ◌; a glyph no font draws falls back to the mark alone, a dotted circle, then its code point
 - [x] ↩ copy, ⌘↩ paste, ⌥↩ copy as HTML entity / hex entity / `\u{…}` / U+XXXX / Python / CSS (configurable), ⌘⌥↩ every format (via `chars`), ⌃↩ favourite, ⌘Y Quick Look page, ⌘L Large Type, ⌘C copy
 - [x] Favourites (data folder JSON) and recents (append-only log written by `act.sh`, compacted by the Script Filter)
-- [x] `chars` inspector (and pasted characters in `uni`): per-code-point rows, counts of code points / grapheme clusters / UTF-16 units / UTF-8 bytes, invisible-character warning; a single character or known emoji sequence shows 12+ formats plus its LaTeX commands, block and aliases; Universal Action “Identify Characters”
+- [x] `chars` inspector (and pasted characters in `uni`): variation sequences (❤️ = U+2764 U+FE0F, text-style ☺︎) named as one character; per-code-point rows, counts of code points / grapheme clusters / UTF-16 units / UTF-8 bytes, invisible-character warning; a single character or known emoji sequence shows 12+ formats plus its LaTeX commands, block and aliases; Universal Action “Identify Characters”
 - [x] `kao`: 1,855 kaomoji and emoticons, 24 categories, search by keyword, favourites and recents
 - [x] `fancy`: 27 styles (math alphabets with their holes, fullwidth, circled, squared, parenthesized, small caps, super/subscript, upside down, strike/slash/underline), NFD so accented letters keep their marks, plain-text row, Universal Action
 - [x] `tex`: 3,007 commands with package; search by command (case-aware), name or pasted symbol; ↩ command / ⌥↩ character (swappable)
@@ -51,7 +51,9 @@ Raycast demand this workflow replaces (downloads, as given in the brief, 2026-09
 - Typography catalogue, emoticons and everyday names written for this workflow.
 
 ## Known limitations
-- Characters newer than the Mac’s fonts (Unicode 17–18 additions on macOS 13–15) draw as a placeholder glyph in icons and titles.
+- Characters newer than the Mac’s fonts (Unicode 17–18 additions on macOS 13–15), and scripts macOS ships no font for (Tangut, SignWriting…), draw as a placeholder glyph in icons and titles.
+- Search copies a character as it is encoded: `red heart` finds U+2764, which some apps draw text-style (❤); pasted ❤️ is identified as its emoji-style sequence. Skin-tone variants aren’t separate rows.
+- `tex` is also the keyword of wookayin/alfred-latex-symbols-workflow (forum/GitHub, not in the Gallery); change it in the Workflow’s Configuration if both are installed.
 - Search is by name; Unihan meanings (search “water” → 水) aren’t included (see v1.1).
 - The typography fixer is heuristic: quotes after unusual punctuation may open instead of close; nested quotes in the Swedish style can’t be told apart.
 - Kaomoji categories are inferred from asciilib keywords; about 140 land in “Other”.
@@ -62,9 +64,10 @@ Raycast demand this workflow replaces (downloads, as given in the brief, 2026-09
 - [x] 1: endless reruns when icons can’t be written; Quick Look pointing at an unwritten page; actions on rows that can’t be copied; “ue” read as U+000E; punctuation-only queries; results over 50 KB inline in the JSON (now a cache file read back by `act.sh`); fancy text unbounded; apostrophes followed the quote style (German ‘n‘); `--save` and Markdown `---` turned into dashes; LaTeX penalty `0 || 3` put LaTeX’s own commands last
 - [x] 2: quadratic quote pass (3 s for 500,000 characters, now 0.2 s); inspector JSON of 160 KB (now 100 rows); pruning could list thousands of icons on a keystroke (now once a day)
 - [x] 3: an alias bonus outranked a better name match (“-e”); `\N{…}` Python escapes weren’t understood; two large results could share a cache file name
+- [x] Independent audit (2026-09-28): variation selectors, Hangul fillers, the Braille blank and marks no font draws produced empty icon tiles (now labelled, or redrawn alone / on ◌); pasted ❤️ (U+2764 U+FE0F) showed as two unrelated code points; the Hangul filler (an “invisible name” trick) wasn’t flagged; the count said 172,873 (it included the 65 controls; Unicode’s count is 172,808); rows repeated values up to 50 KB three times (inspector JSON of 390 KB for 5,000 characters, fancy text 250 KB), now 16,000 characters per value, ⌘C/⌘L only when they differ from `arg`, fancy text capped at 1,000 characters; NOTICE lacked the full W3C licence text, the change date, the WHATWG (CC BY 4.0) and CLDR attributions
 
 ## Verify in real Alfred
-- [ ] `cmd+alt` in Script Filter JSON `mods` is honoured (⌘⌥↩ show every format) and the connection with modifier 1572864 fires.
+- [ ] ⌘⌥↩ (show every format) fires: `cmd+alt` is documented in Alfred’s Script Filter JSON reference and the connection uses 1572864 (⌘ 1048576 + ⌥ 524288), so this is a smoke test only.
 - [ ] Rerun at 0.2 s fills in icons without losing the selected row (uids are `u:<hex>`).
 - [ ] Icons render with colour emoji and font fallback for rare scripts; dark tile setting.
 - [ ] ⌘Y Quick Look of the HTML page shows the large glyph in light and dark mode.
@@ -72,7 +75,9 @@ Raycast demand this workflow replaces (downloads, as given in the brief, 2026-09
 - [ ] Universal Actions “Identify Characters”, “Fancy Text”, “Fix Typography” receive multi-line selections intact (`chars`, `fancy` and `typofix` don’t trim spaces).
 - [ ] `chars ` with only a space typed inspects the space (argument not trimmed).
 - [ ] ⌘⌥↩ opens Alfred on `chars <character>` with a changed `chars` keyword.
-- [ ] Keywords don’t clash with popular Gallery workflows (“UTF Search” and “What Unicode Character Is This?” keywords unknown).
+- [x] Keywords don’t clash with popular Gallery workflows: UTF Search uses `utf`/`utf9`, What Unicode Character Is This? `whatisit?`, Findmoji `emoji`, Emoji Wine `wine`, Emoji Mate `;`, Kaomoji `kaomoji`; Search Unicode (blueset, forum) `u`/`e`/`uid`. Only `tex` is shared, with a non-Gallery LaTeX workflow (see Known limitations).
+- [ ] Pasting ❤️ after `chars` shows one “Heavy Black Heart (emoji style)” row; ⌃↩ favourites it and it comes back under `uni`.
+- [ ] Icons for VS16, U+3164 and U+0489 show a label or the mark, never an empty tile (light and dark).
 - [ ] Screenshots for every `images/*.png` in the README.
 
 ## Release checklist
@@ -84,6 +89,8 @@ Raycast demand this workflow replaces (downloads, as given in the brief, 2026-09
 - [x] No self-updater, no network, nothing installed
 
 ## Ideas for v1.1
+- Emoji-style rows in search for the ~200 characters with an emoji presentation (❤️ next to ❤), ranked below the plain character for typographic names like “copyright”.
+- Skin-tone variants (⌥ on an emoji row, or a default tone setting as in blueset/alfred-search-unicode) and recognising skin-toned sequences in the inspector.
 - Unihan `kDefinition` meanings for CJK search (≈1.5 MB more data).
 - CLDR annotations (emoji keywords in many languages).
 - A block browser (`uni block:arrows`) and script filters (`uni greek:`).

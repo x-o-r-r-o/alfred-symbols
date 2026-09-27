@@ -953,7 +953,7 @@
 	<key>readme</key>
 	<string>## Usage
 
-Search all 172,873 characters of Unicode 18.0 and every emoji via the `uni` keyword. Type a name or an alias (`arrow`, `nbsp`, `pilcrow`), a code point in any notation (`U+2192`, `2192`, `\u{1F600}`, `&amp;#x2192;`) or an HTML entity (`&amp;rarr;`). Leave it empty to see your favourites and recently used characters.
+Search all 172,808 characters of Unicode 18.0 and its emoji via the `uni` keyword. Type a name or an alias (`arrow`, `nbsp`, `pilcrow`), a code point in any notation (`U+2192`, `2192`, `\u{1F600}`, `&amp;#x2192;`) or an HTML entity (`&amp;rarr;`). Leave it empty to see your favourites and recently used characters.
 
 * &lt;kbd&gt;↩&lt;/kbd&gt; Copy the character.
 * &lt;kbd&gt;⌘&lt;/kbd&gt;&lt;kbd&gt;↩&lt;/kbd&gt; Paste it into the frontmost app.

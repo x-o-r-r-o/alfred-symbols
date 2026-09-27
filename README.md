@@ -4,7 +4,7 @@ Find any Unicode character, identify the ones you paste, and copy kaomoji, fancy
 
 ## Usage
 
-Search all 172,873 characters of Unicode 18.0 and every emoji via the `uni` keyword. Type a name or an alias (`arrow`, `nbsp`, `pilcrow`), a code point in any notation (`U+2192`, `2192`, `\u{1F600}`, `&#x2192;`) or an HTML entity (`&rarr;`). Leave it empty to see your favourites and recently used characters.
+Search all 172,808 characters of Unicode 18.0 and its emoji via the `uni` keyword. Type a name or an alias (`arrow`, `nbsp`, `pilcrow`), a code point in any notation (`U+2192`, `2192`, `\u{1F600}`, `&#x2192;`) or an HTML entity (`&rarr;`). Leave it empty to see your favourites and recently used characters.
 
 ![Searching Unicode characters](images/uni.png)
 
@@ -82,7 +82,7 @@ python3 tools/build.py --package                     # write src/info.plist and 
 python3 tests/test_symbols.py                        # run the tests
 ```
 
-The data comes from the [Unicode Character Database](https://www.unicode.org/ucd/) 18.0.0 and its emoji data (Unicode License v3), [unicode.xml](https://www.w3.org/2003/entities/2007xml/) by David Carlisle (W3C Software License) for LaTeX, and [asciilib](https://github.com/iansinnott/asciilib) by Ian Sinnott (MIT) for kaomoji. See `src/data/NOTICE.txt`.
+The data comes from the [Unicode Character Database](https://www.unicode.org/ucd/) 18.0.0 and its emoji data with the CLDR emoji names (Unicode License v3), [unicode.xml](https://www.w3.org/2003/entities/2007xml/) by David Carlisle (W3C Software License) for LaTeX, and [asciilib](https://github.com/iansinnott/asciilib) by Ian Sinnott (MIT) for kaomoji, and the HTML entity names from the [WHATWG HTML Standard](https://html.spec.whatwg.org/multipage/named-characters.html) (CC BY 4.0). See `src/data/NOTICE.txt`.
 
 ## AI disclosure
 
