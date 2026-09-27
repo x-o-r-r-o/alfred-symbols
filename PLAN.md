@@ -58,6 +58,11 @@ Raycast demand this workflow replaces (downloads, as given in the brief, 2026-09
 - `fancy` styles are Unicode look-alikes: screen readers and search engines may not read them.
 - Icons are regenerated after 60 days (pruned by age) and redrawn when the drawing version changes.
 
+## Audits (three full reads; each fix has a regression test)
+- [x] 1: endless reruns when icons can’t be written; Quick Look pointing at an unwritten page; actions on rows that can’t be copied; “ue” read as U+000E; punctuation-only queries; results over 50 KB inline in the JSON (now a cache file read back by `act.sh`); fancy text unbounded; apostrophes followed the quote style (German ‘n‘); `--save` and Markdown `---` turned into dashes; LaTeX penalty `0 || 3` put LaTeX’s own commands last
+- [x] 2: quadratic quote pass (3 s for 500,000 characters, now 0.2 s); inspector JSON of 160 KB (now 100 rows); pruning could list thousands of icons on a keystroke (now once a day)
+- [x] 3: an alias bonus outranked a better name match (“-e”); `\N{…}` Python escapes weren’t understood; two large results could share a cache file name
+
 ## Verify in real Alfred
 - [ ] `cmd+alt` in Script Filter JSON `mods` is honoured (⌘⌥↩ show every format) and the connection with modifier 1572864 fires.
 - [ ] Rerun at 0.2 s fills in icons without losing the selected row (uids are `u:<hex>`).

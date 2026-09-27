@@ -813,6 +813,31 @@ class AuditTwoRegressionTests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(fresh, ".pruned")))
 
 
+class AuditThreeRegressionTests(unittest.TestCase):
+    """Bugs found in the third audit."""
+
+    def test_alias_bonus_only_when_the_name_misses(self):
+        # "HANGUL JUNGSEONG E" (alias "E") came before "LATIN SMALL LETTER E"
+        self.assertEqual(sf("uni", "-e")[0]["arg"], "e")
+        self.assertEqual(sf("uni", "have a nice day")[0]["arg"], "☺")
+
+    def test_python_name_escape(self):
+        self.assertEqual(sf("uni", "\\N{RIGHTWARDS ARROW}")[0]["arg"], "→")
+        self.assertEqual(sf("uni", "\\N{nbsp}")[0]["arg"], "\u00a0")
+
+    def test_options_like_queries(self):
+        for q in ["-e", "-l", "--", "-", "--help"]:
+            for cmd in ["uni", "chars", "kao", "fancy", "tex", "typo", "typofix"]:
+                sf(cmd, q)
+
+    def test_two_large_results_get_different_files(self):
+        text = "a" * 60000
+        items = sf("typofix", text + '"')
+        files = [i["arg"] for i in items if i["arg"].startswith("symfile:")]
+        self.assertEqual(len(files), len(set(files)))
+        self.assertGreaterEqual(len(files), 2)
+
+
 class PerformanceTests(unittest.TestCase):
     def test_keystroke_speed(self):
         queries = ["a", "ar", "arr", "arro", "arrow", "right arrow", "l", "latin small letter e", "U+1F600", "heart", "🙂", "zzzz"]

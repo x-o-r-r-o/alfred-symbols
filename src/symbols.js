@@ -237,16 +237,17 @@ function output(items, extra = {}) {
 
 const NO_MOD = { valid: false, arg: "", subtitle: "Not available for this row" };
 
-// A plain copy/paste row (fancy text, formats, typography)
 // Values over 50 KB are written to the cache and passed as "symfile:<path>", which act.sh reads back,
 // so the Script Filter JSON stays small
+let largeCount = 0;
 function largeValue(v) {
   const dir = trimSlash(env("alfred_workflow_cache", ""));
   if (v.length <= LARGE || !safeDir(dir)) return null;
-  const path = `${cacheDir()}/results/${hash(v)}.txt`;
+  const path = `${cacheDir()}/results/${hash(v)}${(largeCount++).toString(16)}.txt`; // unique within a run
   return writeText(path, v) ? `symfile:${path}` : null;
 }
 
+// A plain copy/paste row (fancy text, formats, typography)
 function textRow(title, value, subtitle, icon, extra = {}) {
   let v = String(value);
   const ok = v !== "" && !v.includes("\u0000");
@@ -650,7 +651,7 @@ function nameSearch(toks, favs, recentSet) {
     if (!ok) continue;
     if (name === joined) score += 40;
     else if (abbr && abbr.split(";").some((k) => k === joined || sameWords(k, toks))) score += 8; // NBSP, ZWJ, everyday names
-    else if (aliases.split(";").includes(joined)) score += 2;
+    else if (inName < toks.length && aliases.split(";").includes(joined)) score += 2; // (only when the name alone doesn't match)
     if (inName === toks.length) {
       score += 2;
       if (name.indexOf(toks[toks.length - 1]) >= name.indexOf(toks[0])) score += 1;
@@ -712,6 +713,13 @@ function uniItems(query) {
     seen.add(k);
     items.push(charRow(rec, { favs }));
   };
+  // a Python name escape: \N{RIGHTWARDS ARROW}
+  const pyName = /^\\N\{([^}]+)\}$/.exec(q);
+  if (pyName) {
+    const t = tokens(pyName[1]).join(" ");
+    const hit = nameSearch(tokens(t), favs, new Set()).find((r) => r.name === t || r.aliases.includes(t) || r.keys.includes(t));
+    if (hit) push(hit);
+  }
   // code points and entities
   const parts = q.split(/\s+/);
   const cpList = parts.map(parseCodePoint);
