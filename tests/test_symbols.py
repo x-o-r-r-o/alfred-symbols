@@ -948,6 +948,18 @@ class PerformanceTests(unittest.TestCase):
         self.assertLess(ms, 500)
 
 
+class RealAlfredRegressionTests(unittest.TestCase):
+    def test_no_duplicate_html_entity_row(self):
+        # "chars ❤️" and "chars  " showed "HTML entity" and "HTML hex entity" with the same value
+        for q in ("\u2764\ufe0f", " ", "\u3164"):
+            it = sf("chars", q)
+            args = [i["arg"] for i in it[1:] if i.get("valid", True) and "entity" in i.get("subtitle", "")]
+            self.assertEqual(len(args), len(set(args)), (q, args))
+        subs = [i["subtitle"].split(" · ")[0] for i in sf("chars", "\u2192")]
+        self.assertIn("HTML named entity", subs)
+        self.assertIn("HTML hex entity", subs)
+
+
 if __name__ == "__main__":
     try:
         unittest.main(verbosity=1)

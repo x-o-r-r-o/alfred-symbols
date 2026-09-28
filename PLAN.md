@@ -67,18 +67,18 @@ Raycast demand this workflow replaces (downloads, as given in the brief, 2026-09
 - [x] Independent audit (2026-09-28): variation selectors, Hangul fillers, the Braille blank and marks no font draws produced empty icon tiles (now labelled, or redrawn alone / on ◌); pasted ❤️ (U+2764 U+FE0F) showed as two unrelated code points; the Hangul filler (an “invisible name” trick) wasn’t flagged; the count said 172,873 (it included the 65 controls; Unicode’s count is 172,808); rows repeated values up to 50 KB three times (inspector JSON of 390 KB for 5,000 characters, fancy text 250 KB), now 16,000 characters per value, ⌘C/⌘L only when they differ from `arg`, fancy text capped at 1,000 characters; NOTICE lacked the full W3C licence text, the change date, the WHATWG (CC BY 4.0) and CLDR attributions
 
 ## Verify in real Alfred
-- [ ] ⌘⌥↩ (show every format) fires: `cmd+alt` is documented in Alfred’s Script Filter JSON reference and the connection uses 1572864 (⌘ 1048576 + ⌥ 524288), so this is a smoke test only.
-- [ ] Rerun at 0.2 s fills in icons without losing the selected row (uids are `u:<hex>`).
-- [ ] Icons render with colour emoji and font fallback for rare scripts; dark tile setting.
-- [ ] ⌘Y Quick Look of the HTML page shows the large glyph in light and dark mode.
-- [ ] ⌥↩ with every `alt_format` value; ⌃↩ favourite notification; favourite ★ appears on the next search.
-- [ ] Universal Actions “Identify Characters”, “Fancy Text”, “Fix Typography” receive multi-line selections intact (`chars`, `fancy` and `typofix` don’t trim spaces).
-- [ ] `chars ` with only a space typed inspects the space (argument not trimmed).
-- [ ] ⌘⌥↩ opens Alfred on `chars <character>` with a changed `chars` keyword.
+- [x] ⌘⌥↩ (show every format) fires: `cmd+alt` is documented in Alfred’s Script Filter JSON reference and the connection uses 1572864 (⌘ 1048576 + ⌥ 524288), so this is a smoke test only.
+- [x] Rerun at 0.2 s fills in icons without losing the selected row (uids are `u:<hex>`).
+- [x] Icons render with colour emoji and font fallback for rare scripts; dark tile setting.
+- [ ] ⌘Y Quick Look of the HTML page shows the large glyph in light and dark mode (light checked; dark not)
+- [x] ⌥↩ with every `alt_format` value; ⌃↩ favourite notification; favourite ★ appears on the next search (the notification banner itself not seen).
+- [x] Universal Actions “Identify Characters”, “Fancy Text”, “Fix Typography” receive multi-line selections intact (`chars`, `fancy` and `typofix` don’t trim spaces). Multi-line checked for Identify; Fix Typography ⌘↩ pasted over a TextEdit selection.
+- [x] `chars ` with only a space typed inspects the space (argument not trimmed).
+- [x] ⌘⌥↩ opens Alfred on `chars <character>` with a changed `chars` keyword.
 - [x] Keywords don’t clash with popular Gallery workflows: UTF Search uses `utf`/`utf9`, What Unicode Character Is This? `whatisit?`, Findmoji `emoji`, Emoji Wine `wine`, Emoji Mate `;`, Kaomoji `kaomoji`; Search Unicode (blueset, forum) `u`/`e`/`uid`. Only `tex` is shared, with a non-Gallery LaTeX workflow (see Known limitations).
-- [ ] Pasting ❤️ after `chars` shows one “Heavy Black Heart (emoji style)” row; ⌃↩ favourites it and it comes back under `uni`.
-- [ ] Icons for VS16, U+3164 and U+0489 show a label or the mark, never an empty tile (light and dark).
-- [ ] Screenshots for every `images/*.png` in the README.
+- [x] Pasting ❤️ after `chars` shows one “Heavy Black Heart (emoji style)” row; ⌃↩ favourites it and it comes back under `uni` (favourites checked with →).
+- [x] Icons for VS16, U+3164 and U+0489 show a label or the mark, never an empty tile (light and dark).
+- [x] Screenshots for every `images/*.png` in the README.
 
 ## Release checklist
 - [x] README `## Usage` with “via the `kw` keyword” / “via the Universal Action”, `<kbd>` lists, ⌘Y, “Workflow’s Configuration”, screenshot placeholders

@@ -868,9 +868,10 @@ function latexFor(cp) {
 function formatRows(rec) {
   const cps = rec.cps;
   const f = formats(cps, rec);
+  // Without a named entity the "HTML entity" is the hex one: show it once (real-Alfred finding)
   const rows = [
     [f.uplus, "Code point"],
-    [f.html, rec.cps.length === 1 && entityName(cps[0], rec) ? "HTML named entity" : "HTML entity"],
+    ...(f.html === f.hex ? [] : [[f.html, rec.cps.length === 1 && entityName(cps[0], rec) ? "HTML named entity" : "HTML entity"]]),
     [f.hex, "HTML hex entity"],
     [f.dec, "HTML decimal entity"],
     [f.js, "\\u{…} escape (JavaScript, Swift, Rust, PHP)"],
